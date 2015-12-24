@@ -17,10 +17,6 @@
 
 (defparameter *defined-spec-groups* (make-hash-table :test 'equal))
 
-(defun expect-internal (varname var-value expectation &rest args)
-  (if (not thing)
-      (error 'spec-failed)))
-  
 
 (defun run-expectation (exid var-name var args)
   (let ((expectation (find-expectation exid)))
@@ -30,8 +26,12 @@
 		   :message (format nil "(~a=~s) ~a"
 				    var-name
 				    var
-				    (expectation-description expectation)))))))
+				    (expectation-message expectation)))))))
 
+;;(defun expect-internal (varname var-value expectation &rest args)
+;;  (if (not thing)
+;;      (error 'spec-failed)))
+  
 (defmacro expect (var expectation &rest args)
   `(run-expectation ,expectation ',var ,var ,args))
 
@@ -50,19 +50,25 @@
   (loop for caption being the hash-keys of *defined-spec-groups*
      do (format t "~a~%" caption)))
 
-(defun alloc-new-group (caption)
+(defun alloc-new-group (caption parent)
   (let ((new-group (make-spec-group :caption caption)))
     ;;(push new-group *defined-spec-groups*)
     (setf (gethash caption *defined-spec-groups*) new-group)
     new-group))
 
 (defmacro specify (caption &body body)
-  
-  `(let ((new-group (alloc-new-group ,caption)))
-     (macrolet ((it (caption &body body)
-		   `(build-it ,caption new-group (lambda () ,@body))))
 
-       ,@body)))
+  (let ((group-var (gensym "spec-stack")))
+    
+    `(let* ((,group-var nil)
+	    (new-group (alloc-new-group ,caption)))
+       
+       (macrolet ((it (caption &body body)
+		    `(build-it ,caption new-group (lambda () ,@body)))
+		  (context (caption &body body)
+		    `(fuuuuu))))
+
+		    ,@body)))
   
 
 (defun run-group (grp)
