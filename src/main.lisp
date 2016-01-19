@@ -4,6 +4,7 @@
 
 (defstruct spec-group
   caption
+  ;; this should count all the sub entries?
   entries)
 
 (defstruct spec
@@ -15,7 +16,7 @@
 	    :initform nil
 	    :accessor spec-failed-message)))
 
-(defparameter *defined-spec-groups* (make-hash-table :test 'equal))
+(defparameter *spec-group-root* nil)
 
 
 (defun run-expectation (exid var-name var args)
@@ -28,75 +29,115 @@
 				    var
 				    (expectation-message expectation)))))))
 
-;;(defun expect-internal (varname var-value expectation &rest args)
-;;  (if (not thing)
-;;      (error 'spec-failed)))
-  
 (defmacro expect (var expectation &rest args)
   `(run-expectation ,expectation ',var ,var ,args))
 
 (defun clear-specs ()
-  (let ((count (length *defined-specs*)))
-    (setf *defined-specs* nil
-	  *defined-spec-groups* (make-hash-table :test 'equal))
+  (let ((count (length *spec-group-root*)))
+    (setf *spec-group-root* nil)
     count))
 
 (defun build-it (name group code)
-  (push (make-spec :name name
-		   :code code)
-	(spec-group-entries group)))
+  (setf (spec-group-entries group)
+	(al-insert (spec-group-entries group) name
+		   (make-spec :name name
+			      :code code))))
+
+;;  (push (make-spec :name name
+;;		   :code code)
+	;; NOTE: this is a list and it should be
+	;; an a-list with (name . spec) pairs!
+;;	(spec-group-entries group)))
 
 (defun list-specs ()
-  (loop for caption being the hash-keys of *defined-spec-groups*
-     do (format t "~a~%" caption)))
+  (al-each (*spec-group-root* name group)
+    (declare (ignore group))
+    (format t "~a~%" name)))
 
 (defun alloc-new-group (caption parent)
+  (format t "alloc-new-group~%")
   (let ((new-group (make-spec-group :caption caption)))
-    ;;(push new-group *defined-spec-groups*)
-    (setf (gethash caption *defined-spec-groups*) new-group)
+
+    (if parent
+	(setf (spec-group-entries parent)
+	      (al-insert (spec-group-entries parent) caption new-group))
+	
+	(setf *spec-group-root*
+	      (al-insert *spec-group-root* caption new-group)))
+	
     new-group))
 
-(defmacro specify (caption &body body)
-
-  (let ((group-var (gensym "spec-stack")))
+(defmacro internal-group (caption parent  &body body)
     
-    `(let* ((,group-var nil)
-	    (new-group (alloc-new-group ,caption)))
+    `(let ((new-group (alloc-new-group ,caption ,parent)))
        
        (macrolet ((it (caption &body body)
 		    `(build-it ,caption new-group (lambda () ,@body)))
 		  (context (caption &body body)
-		    `(fuuuuu))))
+		    `(internal-group ,caption new-group ,@body)))
 
 		    ,@body)))
+
+(defmacro specify (caption &body body)
+  `(internal-group ,caption nil ,@body))
+
   
 
-(defun run-group (grp)
-  (let ((failures 0) (count (length (spec-group-entries grp))))
-    (format t "group: '~a'~%" (spec-group-caption grp))
 
-    (dolist (s (spec-group-entries grp))
 
-      (format t "  spec: '~a'~%" (spec-name s))
+(defun count-specs (entry-list)
+  (let ((count 0))
+    (format t "count-specs: (type-of entry-list) ~a~%" (type-of entry-list))
+    (al-each (entry-list name ent)
+      (declare (ignore name))
+      (format t "  t=~a~%" (type-of ent))
+      (typecase ent
+	(spec-group (incf count (count-specs (spec-group-entries ent))))
+	(spec (incf count))))
+    count))
+
+(defun run-group (spec-list)
+  (let ((failures 0) (count 0))
+    
+    ;;(format t "group: '~a'~%" (spec-group-caption grp))
+
+    (al-each (spec-list caption entry)
+
+      (declare (ignore caption))
       
-      (handler-case
-	  (progn
-	    (funcall (spec-code s))
-	    (format t "      : passed~%"))
-	    
-	(spec-failed (failure)
-	  (incf failures)
-	  (format t "      : failed '~a'~%"
-		  (spec-failed-message failure)))))
+      ;;(format t "  spec: '~a'~%" (spec-name s))
+
+      (typecase entry
+	(spec-group (multiple-value-bind (c f) (run-group (spec-group-entries entry))
+		      (format t "c=~a  f=~a~%" c f)
+		      (incf count c)
+		      (incf failures f)))
+	
+	(spec
+	 
+	 (handler-case
+	     (progn
+	       (incf count)
+	       (funcall (spec-code entry))
+	       (format t "      : passed~%"))
+	   
+	   (spec-failed (failure)
+	     (incf failures)
+	     (format t "      : failed '~a'~%"
+		     (spec-failed-message failure)))))))
 
     (values count failures)))
-
+  
 (defun run-all ()
   (let ((count 0) (failures 0))
 
-    (loop for caption being the hash-keys of *defined-spec-groups*
-       using (hash-value specs)
-       do (multiple-value-bind (c f) (run-group specs)
+;;    (loop for caption being the hash-keys of *defined-spec-groups*
+;;       using (hash-value specs)
+    ;;       do (multiple-value-bind (c f) (run-group specs)
+
+    (al-each (*spec-group-root* caption spec-group)
+      (declare (ignore caption))
+      (multiple-value-bind (c f) (run-group (spec-group-entries spec-group))
 	    (incf count    c)
 	    (incf failures f)))
 	
