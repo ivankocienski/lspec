@@ -96,20 +96,19 @@
 	(spec (incf count))))
     count))
 
-(defun run-group (spec-list)
-  (let ((failures 0) (count 0))
+(defun run-group (spec-grp &optional (depth 0))
+  (let ((failures 0) (count 0) (indent (repeat-string depth "  ")))
     
-    ;;(format t "group: '~a'~%" (spec-group-caption grp))
+    (format t "~a~a~%" indent (spec-group-caption spec-grp))
+    
+    (al-each ((spec-group-entries spec-grp) caption entry)
 
-    (al-each (spec-list caption entry)
+      ;;(declare (ignore caption))
 
-      (declare (ignore caption))
+      ;;(format t "TYPE='~a'~%" (type-of entry))
       
-      ;;(format t "  spec: '~a'~%" (spec-name s))
-
       (typecase entry
-	(spec-group (multiple-value-bind (c f) (run-group (spec-group-entries entry))
-		      (format t "c=~a  f=~a~%" c f)
+	(spec-group (multiple-value-bind (c f) (run-group entry (+ depth 2))
 		      (incf count c)
 		      (incf failures f)))
 	
@@ -117,6 +116,8 @@
 	 
 	 (handler-case
 	     (progn
+	       (format t "~a   ~a~%" indent (spec-name entry))
+
 	       (incf count)
 	       (funcall (spec-code entry))
 	       (format t "      : passed~%"))
@@ -135,9 +136,9 @@
 ;;       using (hash-value specs)
     ;;       do (multiple-value-bind (c f) (run-group specs)
 
-    (al-each (*spec-group-root* caption spec-group)
+    (al-each (*spec-group-root* caption entry)
       (declare (ignore caption))
-      (multiple-value-bind (c f) (run-group (spec-group-entries spec-group))
+      (multiple-value-bind (c f) (run-group entry)
 	    (incf count    c)
 	    (incf failures f)))
 	

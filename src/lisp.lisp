@@ -25,3 +25,6 @@
      (let ((,key-var (car c))
 	   (,val-var (cdr c)))
        ,@body)))
+
+
+(defun repeat-string (
