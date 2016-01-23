@@ -103,9 +103,7 @@
     
     (al-each ((spec-group-entries spec-grp) caption entry)
 
-      ;;(declare (ignore caption))
-
-      ;;(format t "TYPE='~a'~%" (type-of entry))
+      (declare (ignore caption))
       
       (typecase entry
 	(spec-group (multiple-value-bind (c f) (run-group entry (+ depth 2))
@@ -116,15 +114,16 @@
 	 
 	 (handler-case
 	     (progn
-	       (format t "~a   ~a~%" indent (spec-name entry))
+	       (format t "~a  ~a~%" indent (spec-name entry))
 
 	       (incf count)
 	       (funcall (spec-code entry))
-	       (format t "      : passed~%"))
+	       (format t "~a  : passed~%" indent))
 	   
 	   (spec-failed (failure)
 	     (incf failures)
-	     (format t "      : failed '~a'~%"
+	     (format t "~a  : failed '~a'~%"
+		     indent
 		     (spec-failed-message failure)))))))
 
     (values count failures)))

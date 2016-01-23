@@ -1,0 +1,12 @@
+
+- before, around, after callbacks
+- 'let' and 'let!' declarations
+- empty 'it' and 'context' blocks becoming pending
+- pending keyword in 'it' block stops test
+- configuration block (?)
+
+ideas in no real order:
+
+- colour output
+- better formatters
+- 'clean' mode (start a new lisp, load app/tests and run in fresh environment)
