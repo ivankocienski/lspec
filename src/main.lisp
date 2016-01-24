@@ -4,6 +4,7 @@
 
 (defstruct spec-group
   caption
+  around-callbacks
   ;; this should count all the sub entries?
   entries)
 
@@ -67,14 +68,25 @@
 	
     new-group))
 
+(defmacro build-around-each (group &body body)
+  `(push (lambda (next-step)
+	   (macrolet ((yield () `(funcall next-step)))
+	     ,@body))
+	 (spec-group-around-callbacks ,group))
+  )
+
 (defmacro internal-group (caption parent  &body body)
     
     `(let ((new-group (alloc-new-group ,caption ,parent)))
        
        (macrolet ((it (caption &body body)
 		    `(build-it ,caption new-group (lambda () ,@body)))
+		  
 		  (context (caption &body body)
-		    `(internal-group ,caption new-group ,@body)))
+		    `(internal-group ,caption new-group ,@body))
+		  
+		  (around-each (&body body)
+		    `(build-around-each new-group ,@body)))
 
 		    ,@body)))
 
@@ -96,6 +108,16 @@
 	(spec (incf count))))
     count))
 
+(defun invoke-spec (spec group)
+    
+  (labels ((recursive-spec-step (callbacks)
+	     (let ((callback (car callbacks)))
+	       (if callback
+		   (funcall callback (lambda () (recursive-spec-step (cdr callbacks))))
+		   (funcall (spec-code spec))))))
+    
+    (recursive-spec-step (spec-group-around-callbacks group))))
+
 (defun run-group (spec-grp &optional (depth 0))
   (let ((failures 0) (count 0) (indent (repeat-string depth "  ")))
     
@@ -110,21 +132,20 @@
 		      (incf count c)
 		      (incf failures f)))
 	
-	(spec
-	 
-	 (handler-case
-	     (progn
-	       (format t "~a  ~a~%" indent (spec-name entry))
+	(spec (handler-case
+		  (progn
+		    (format t "~a  ~a~%" indent (spec-name entry))
 
-	       (incf count)
-	       (funcall (spec-code entry))
-	       (format t "~a  : passed~%" indent))
-	   
-	   (spec-failed (failure)
-	     (incf failures)
-	     (format t "~a  : failed '~a'~%"
-		     indent
-		     (spec-failed-message failure)))))))
+		    (incf count)
+		    (invoke-spec entry spec-grp)
+		    
+		    (format t "~a  : passed~%" indent))
+		
+		(spec-failed (failure)
+		  (incf failures)
+		  (format t "~a  : failed '~a'~%"
+			  indent
+			  (spec-failed-message failure)))))))
 
     (values count failures)))
   

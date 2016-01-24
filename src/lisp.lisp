@@ -27,4 +27,7 @@
        ,@body)))
 
 
-(defun repeat-string (
+(defun repeat-string (count str)
+  (format nil "~V@{~a~:*~}" count str))
+
+

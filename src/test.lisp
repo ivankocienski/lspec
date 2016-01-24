@@ -2,6 +2,20 @@
 
 (specify "A group of tests"
 
+  (before
+   ;; do some set up here ...
+   )
+
+  (after-each
+   ;; do some cleanup
+   )
+
+  (around-each
+   ;; do some set up
+   (yield)
+   ;; cleanup
+   )
+  
   (context "a way of nesting and segmenting tests"
 	   
 	   (it "is okay"
@@ -16,3 +30,34 @@
 	   (it "should find things"
 	       (let ((true t))
 		 (expect true :to-be-true)))))
+
+
+
+
+(specify "tests with callback blocks"
+
+  (around-each
+
+   ;; set up
+   (format t "around 0 set up~%")
+
+   (yield)
+
+   ;; tear down
+   (format t "around 0 tear down~%")
+   )
+  
+  (around-each
+
+   ;; set up
+   (format t "around 1 set up~%")
+
+   (yield)
+
+   ;; tear down
+   (format t "around 1 tear down~%")
+   )
+
+  (it "should run before blocks!"
+      (format t "  in spec~%")))
+
