@@ -6,7 +6,7 @@
 	       (let* ((scan-cons (car lst))
 		      (scan-key  (car scan-cons)))
 
-		 (if (eq key scan-key)
+		 (if (equal key scan-key)
 		     (acons key value (cdr lst))
 		     (cons scan-cons (scan-insert (cdr lst)))))
 
@@ -15,10 +15,10 @@
     (scan-insert db)))
 
 (defun al-delete (db key)
-  (delete-if (lambda (c) (eq (car c) key)) db))
+  (delete-if (lambda (c) (equal (car c) key)) db))
 
 (defun al-lookup (db key)
-  (cdr (find-if (lambda (c) (eq (car c) key)) db)))
+  (cdr (find-if (lambda (c) (equal (car c) key)) db)))
 
 (defmacro al-each ((db key-var val-var) &body body)
   `(dolist (c ,db)

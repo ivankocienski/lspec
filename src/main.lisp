@@ -6,7 +6,8 @@
   caption
   around-callbacks
   ;; this should count all the sub entries?
-  entries)
+  entries
+  parent)
 
 (defstruct spec
   name
@@ -44,12 +45,6 @@
 		   (make-spec :name name
 			      :code code))))
 
-;;  (push (make-spec :name name
-;;		   :code code)
-	;; NOTE: this is a list and it should be
-	;; an a-list with (name . spec) pairs!
-;;	(spec-group-entries group)))
-
 (defun list-specs ()
   (al-each (*spec-group-root* name group)
     (declare (ignore group))
@@ -57,7 +52,7 @@
 
 (defun alloc-new-group (caption parent)
   (format t "alloc-new-group~%")
-  (let ((new-group (make-spec-group :caption caption)))
+  (let ((new-group (make-spec-group :caption caption :parent parent)))
 
     (if parent
 	(setf (spec-group-entries parent)
@@ -102,21 +97,27 @@
     (format t "count-specs: (type-of entry-list) ~a~%" (type-of entry-list))
     (al-each (entry-list name ent)
       (declare (ignore name))
-      (format t "  t=~a~%" (type-of ent))
       (typecase ent
 	(spec-group (incf count (count-specs (spec-group-entries ent))))
 	(spec (incf count))))
     count))
 
-(defun invoke-spec (spec group)
+(defun invoke-spec (spec start-group)
     
   (labels ((recursive-spec-step (callbacks)
 	     (let ((callback (car callbacks)))
 	       (if callback
 		   (funcall callback (lambda () (recursive-spec-step (cdr callbacks))))
-		   (funcall (spec-code spec))))))
-    
-    (recursive-spec-step (spec-group-around-callbacks group))))
+		   (funcall (spec-code spec)))))
+	   
+	   (gather-callbacks (group)
+	     (if (spec-group-parent group)
+		 (append (spec-group-around-callbacks group)
+			 (gather-callbacks (spec-group-parent group)))
+		 
+		 (spec-group-around-callbacks group) )))
+
+    (recursive-spec-step (reverse (gather-callbacks start-group)))))
 
 (defun run-group (spec-grp &optional (depth 0))
   (let ((failures 0) (count 0) (indent (repeat-string depth "  ")))
@@ -151,10 +152,6 @@
   
 (defun run-all ()
   (let ((count 0) (failures 0))
-
-;;    (loop for caption being the hash-keys of *defined-spec-groups*
-;;       using (hash-value specs)
-    ;;       do (multiple-value-bind (c f) (run-group specs)
 
     (al-each (*spec-group-root* caption entry)
       (declare (ignore caption))

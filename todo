@@ -1,5 +1,5 @@
 
-- before, around, after callbacks
+* before, around, after callbacks
 - 'let' and 'let!' declarations
 - empty 'it' and 'context' blocks becoming pending
 - pending keyword in 'it' block stops test

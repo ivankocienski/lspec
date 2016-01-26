@@ -58,6 +58,8 @@
    (format t "around 1 tear down~%")
    )
 
-  (it "should run before blocks!"
-      (format t "  in spec~%")))
+  (context "this is a sub context"
+	   
+	   (it "should run before blocks!"
+	       (format t "  in spec~%"))))
 
