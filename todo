@@ -1,6 +1,8 @@
 
 * before, around, after callbacks
-- 'let' and 'let!' declarations
+  > around done, before and after can be derived from this
+? 'let' and 'let!' declarations
+  > just use (let) forms!
 - empty 'it' and 'context' blocks becoming pending
 - pending keyword in 'it' block stops test
 - configuration block (?)

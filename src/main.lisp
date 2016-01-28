@@ -11,12 +11,18 @@
 
 (defstruct spec
   name
-  code)
+  code
+  is-empty)
 
 (define-condition spec-failed (error)
   ((message :initarg :message
 	    :initform nil
 	    :accessor spec-failed-message)))
+
+(define-condition spec-pending (error)
+  ((message :initarg :message
+	    :initform nil
+	    :accessor spec-pending-message)))
 
 (defparameter *spec-group-root* nil)
 
@@ -39,16 +45,17 @@
     (setf *spec-group-root* nil)
     count))
 
-(defun build-it (name group code)
-  (setf (spec-group-entries group)
-	(al-insert (spec-group-entries group) name
-		   (make-spec :name name
-			      :code code))))
-
 (defun list-specs ()
   (al-each (*spec-group-root* name group)
     (declare (ignore group))
     (format t "~a~%" name)))
+
+(defun build-it (name group code empty)
+  (setf (spec-group-entries group)
+	(al-insert (spec-group-entries group) name
+		   (make-spec :name name
+			      :code code
+			      :is-empty empty))))
 
 (defun alloc-new-group (caption parent)
   (format t "alloc-new-group~%")
@@ -75,7 +82,7 @@
     `(let ((new-group (alloc-new-group ,caption ,parent)))
        
        (macrolet ((it (caption &body body)
-		    `(build-it ,caption new-group (lambda () ,@body)))
+		    `(build-it ,caption new-group (lambda () ,@body) ,(null body)))
 		  
 		  (context (caption &body body)
 		    `(internal-group ,caption new-group ,@body))
@@ -117,10 +124,14 @@
 		 
 		 (spec-group-around-callbacks group) )))
 
+    ;; NOTE: yeah, I know this is innefficient in the
+    ;;   way it re-gathers the callbacks and reverses them for each spec.
+    ;;   It could at least be moved into run-group
+    
     (recursive-spec-step (reverse (gather-callbacks start-group)))))
 
 (defun run-group (spec-grp &optional (depth 0))
-  (let ((failures 0) (count 0) (indent (repeat-string depth "  ")))
+  (let ((failures 0) (count 0) ( pending 0) (indent (repeat-string depth "  ")))
     
     (format t "~a~a~%" indent (spec-group-caption spec-grp))
     
@@ -129,18 +140,25 @@
       (declare (ignore caption))
       
       (typecase entry
-	(spec-group (multiple-value-bind (c f) (run-group entry (+ depth 2))
-		      (incf count c)
-		      (incf failures f)))
+	(spec-group (multiple-value-bind (c f p) (run-group entry (+ depth 2))
+		      (incf count    c)
+		      (incf failures f)
+		      (incf pending  p)))
 	
 	(spec (handler-case
 		  (progn
 		    (format t "~a  ~a~%" indent (spec-name entry))
-
 		    (incf count)
-		    (invoke-spec entry spec-grp)
+
+		    (if (spec-is-empty entry)
+			(progn
+			  (format t "~a  : pending~%" indent)
+			  (incf pending))
+			
+			(progn
+			  (invoke-spec entry spec-grp)
 		    
-		    (format t "~a  : passed~%" indent))
+			  (format t "~a  : passed~%" indent))))
 		
 		(spec-failed (failure)
 		  (incf failures)
@@ -148,15 +166,16 @@
 			  indent
 			  (spec-failed-message failure)))))))
 
-    (values count failures)))
+    (values count failures pending)))
   
 (defun run-all ()
-  (let ((count 0) (failures 0))
+  (let ((count 0) (failures 0) (pending 0))
 
     (al-each (*spec-group-root* caption entry)
       (declare (ignore caption))
-      (multiple-value-bind (c f) (run-group entry)
+      (multiple-value-bind (c f p) (run-group entry)
 	    (incf count    c)
-	    (incf failures f)))
+	    (incf failures f)
+	    (incf pending  p)))
 	
-    (format t "done. ~d specs, ~d failed~%" count failures)))
+    (format t "done. ~d specs, ~d failed, ~d pending~%" count failures pending)))

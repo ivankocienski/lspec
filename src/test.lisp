@@ -44,8 +44,7 @@
    (yield)
 
    ;; tear down
-   (format t "around 0 tear down~%")
-   )
+   (format t "around 0 tear down~%"))
   
   (around-each
 
@@ -55,11 +54,28 @@
    (yield)
 
    ;; tear down
-   (format t "around 1 tear down~%")
-   )
+   (format t "around 1 tear down~%"))
 
+  (it "should only run above blocks~%"
+      (format t "  in C1 spec~%"))
+
+  (it "should be pending")
+  
   (context "this is a sub context"
-	   
+	   (around-each
+
+	    ;; set up
+	    (format t "around 2 set up~%")
+
+	    (yield)
+
+	    ;; tear down
+	    (format t "around 2 tear down~%")
+	    )
+
 	   (it "should run before blocks!"
-	       (format t "  in spec~%"))))
+	       (format t "  in spec~%")))
+
+  (it "should only be here"
+      (format t "  in C1 spec~%")))
 
