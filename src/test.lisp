@@ -60,6 +60,12 @@
       (format t "  in C1 spec~%"))
 
   (it "should be pending")
+
+  (it "is also pending"
+      (pending))
+
+  (it "is pending with a nice message"
+      (pending "FIXME"))
   
   (context "this is a sub context"
 	   (around-each

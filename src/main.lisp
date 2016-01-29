@@ -74,15 +74,21 @@
   `(push (lambda (next-step)
 	   (macrolet ((yield () `(funcall next-step)))
 	     ,@body))
-	 (spec-group-around-callbacks ,group))
-  )
+	 (spec-group-around-callbacks ,group)))
+
+(defmacro internal-it (caption group &body body)
+  `(macrolet ((pending (&optional (message "This spec is pending"))
+		`(error 'spec-pending
+			:message ,message)))
+     
+     (build-it ,caption ,group (lambda () ,@body) ,(null body))))
 
 (defmacro internal-group (caption parent  &body body)
     
     `(let ((new-group (alloc-new-group ,caption ,parent)))
        
        (macrolet ((it (caption &body body)
-		    `(build-it ,caption new-group (lambda () ,@body) ,(null body)))
+		    `(internal-it ,caption new-group ,@body))
 		  
 		  (context (caption &body body)
 		    `(internal-group ,caption new-group ,@body))
@@ -131,7 +137,7 @@
     (recursive-spec-step (reverse (gather-callbacks start-group)))))
 
 (defun run-group (spec-grp &optional (depth 0))
-  (let ((failures 0) (count 0) ( pending 0) (indent (repeat-string depth "  ")))
+  (let ((failures 0) (count 0) (pending 0) (indent (repeat-string depth "  ")))
     
     (format t "~a~a~%" indent (spec-group-caption spec-grp))
     
@@ -164,7 +170,13 @@
 		  (incf failures)
 		  (format t "~a  : failed '~a'~%"
 			  indent
-			  (spec-failed-message failure)))))))
+			  (spec-failed-message failure)))
+
+		(spec-pending (pending-condition)
+		  (incf pending)
+		  (format t "~a  : pending '~a'~%"
+			  indent
+			  (spec-pending-message pending-condition)))))))
 
     (values count failures pending)))
   
