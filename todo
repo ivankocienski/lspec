@@ -7,10 +7,12 @@
 * pending keyword in 'it' block stops test
 - configuration block (?)
 
+- run specific test
+- better formatters
+
 ideas in no real order:
 
 - colour output
-- better formatters
 - 'clean' mode (start a new lisp, load app/tests and run in fresh environment)
 - tags- tests can be grouped, ie :ui :db :network etc.
 - dependencies- tests will run in order of precedence

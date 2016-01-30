@@ -2,13 +2,13 @@
 
 (specify "A group of tests"
 
-  (before
+  ;;(before
    ;; do some set up here ...
-   )
+  ;; )
 
-  (after-each
+  ;;(after-each
    ;; do some cleanup
-   )
+   ;;)
 
   (around-each
    ;; do some set up

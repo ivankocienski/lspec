@@ -3,6 +3,7 @@
 ;; what was i doing again?
 
 (defstruct spec-group
+  id
   caption
   around-callbacks
   ;; this should count all the sub entries?
@@ -10,6 +11,7 @@
   parent)
 
 (defstruct spec
+  id
   name
   code
   is-empty)
@@ -25,7 +27,8 @@
 	    :accessor spec-pending-message)))
 
 (defparameter *spec-group-root* nil)
-
+;;(defparameter *id-for-spec* 0)
+;;(defparameter *id-for-group* 0)
 
 (defun run-expectation (exid var-name var args)
   (let ((expectation (find-expectation exid)))
@@ -46,20 +49,47 @@
     count))
 
 (defun list-specs ()
-  (al-each (*spec-group-root* name group)
-    (declare (ignore group))
-    (format t "~a~%" name)))
+  (labels ((iterate-entry-list (caption depth id entries)
+
+	   (format t "~a~a~a~%"
+		   (repeat-string depth "  ")
+		   (if id (format nil "(~a) " id) "")
+		   caption)
+	   
+	   (al-each (entries name entry)
+
+	     (typecase entry
+	       (spec-group (progn
+			     (iterate-entry-list (spec-group-caption entry)
+					       (1+ depth)
+					       (spec-group-id entry)
+					       (spec-group-entries entry))
+			     (format t "~%")))
+			   
+
+	       (spec (format t "~a  (~a) ~a~%"
+			     (repeat-string depth "  ")
+			     (spec-id entry)
+			     name))))))
+
+    (iterate-entry-list "ROOT" 0 nil *spec-group-root*)))
 
 (defun build-it (name group code empty)
   (setf (spec-group-entries group)
 	(al-insert (spec-group-entries group) name
 		   (make-spec :name name
 			      :code code
-			      :is-empty empty))))
+			      :is-empty empty
+			      :id (1+ (length (spec-group-entries group)))))))
 
 (defun alloc-new-group (caption parent)
   (format t "alloc-new-group~%")
-  (let ((new-group (make-spec-group :caption caption :parent parent)))
+  (let ((new-group (make-spec-group :caption caption
+				    :parent parent
+				    :id (1+ (length
+					     (if parent
+						 (spec-group-entries parent)
+						 *spec-group-root*))))))
 
     (if parent
 	(setf (spec-group-entries parent)
@@ -83,7 +113,7 @@
      
      (build-it ,caption ,group (lambda () ,@body) ,(null body))))
 
-(defmacro internal-group (caption parent  &body body)
+(defmacro internal-group (caption parent &body body)
     
     `(let ((new-group (alloc-new-group ,caption ,parent)))
        
@@ -100,10 +130,6 @@
 
 (defmacro specify (caption &body body)
   `(internal-group ,caption nil ,@body))
-
-  
-
-
 
 (defun count-specs (entry-list)
   (let ((count 0))
@@ -191,3 +217,6 @@
 	    (incf pending  p)))
 	
     (format t "done. ~d specs, ~d failed, ~d pending~%" count failures pending)))
+
+(defun run-select id
+  )
