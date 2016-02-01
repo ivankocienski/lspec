@@ -31,3 +31,15 @@
   (format nil "~V@{~a~:*~}" count str))
 
 
+(defun chomp-by-char (string char)
+  (let ((found-at (position char string)))
+
+    (values (subseq string 0 found-at)
+	    found-at)))
+
+(defun split-by-char (string char)
+	 (multiple-value-bind (sub-string len) (chomp-by-char string char)
+	   (if len
+	       (cons sub-string
+		     (split-by-char (subseq string (1+ len)) char))
+	       (list sub-string))))

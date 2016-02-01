@@ -14,6 +14,7 @@
   id
   name
   code
+  group
   is-empty)
 
 (define-condition spec-failed (error)
@@ -80,6 +81,7 @@
 		   (make-spec :name name
 			      :code code
 			      :is-empty empty
+			      :group group
 			      :id (1+ (length (spec-group-entries group)))))))
 
 (defun alloc-new-group (caption parent)
@@ -141,7 +143,7 @@
 	(spec (incf count))))
     count))
 
-(defun invoke-spec (spec start-group)
+(defun invoke-spec (spec)
     
   (labels ((recursive-spec-step (callbacks)
 	     (let ((callback (car callbacks)))
@@ -160,7 +162,9 @@
     ;;   way it re-gathers the callbacks and reverses them for each spec.
     ;;   It could at least be moved into run-group
     
-    (recursive-spec-step (reverse (gather-callbacks start-group)))))
+    (recursive-spec-step (reverse
+			  (gather-callbacks
+			   (spec-group spec))))))
 
 (defun run-group (spec-grp &optional (depth 0))
   (let ((failures 0) (count 0) (pending 0) (indent (repeat-string depth "  ")))
@@ -188,7 +192,7 @@
 			  (incf pending))
 			
 			(progn
-			  (invoke-spec entry spec-grp)
+			  (invoke-spec entry)
 		    
 			  (format t "~a  : passed~%" indent))))
 		
@@ -218,5 +222,50 @@
 	
     (format t "done. ~d specs, ~d failed, ~d pending~%" count failures pending)))
 
-(defun run-select id
+(defun run-select (filter-string)
+  (let ((path  (mapcar (lambda (s) (parse-integer s)) (split-by-char filter-string #\.))))
+
+    (labels ((find-entry (entry-list id)
+	     (al-each (entry-list name entry)
+	       (declare (ignore name))
+	       (let ((entry-id (typecase entry
+				 (spec (spec-id entry))
+				 (spec-group (spec-group-id entry)))))
+		 (if (eq entry-id id)
+		     (return-from find-entry entry))))
+	       nil)
+
+	     (find-by-descent (id-list entries)
+	       (if id-list
+		   
+		   (if entries
+		       (let ((found (find-entry entries (car id-list))))
+			 (if found
+			     (if (spec-group-p found)
+				 (find-by-descent (cdr id-list)
+						  (spec-group-entries found))
+				 found))))
+		   entries))
+	     )
+
+      (let ((found (find-by-descent path
+				    *spec-group-root*)))
+
+	(typecase found
+	  (spec
+	   (invoke-spec found)) 
+	  
+	  (list
+	   (al-each (found name entry)
+	     (declare (ignore name))
+	     (typecase entry
+	       (spec (invoke-spec entry))
+	       (spec-group (run-group found)))))
+	   ;;(format t "found range~%"))
+	  
+	  (t (format t "didn't find a thing~%"))))))
+      
+
+      
+	  
   )
