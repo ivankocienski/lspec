@@ -167,20 +167,24 @@
 			   (spec-group spec))))))
 
 (defun run-group (spec-grp &optional (depth 0))
-  (let ((failures 0) (count 0) (pending 0) (indent (repeat-string depth "  ")))
+  (declare (ignore spec-grp depth)))
+
+(defun run-group-entries (entry-list depth)
+    (let ((failures 0) (count 0) (pending 0) (indent (repeat-string depth "  ")))
     
-    (format t "~a~a~%" indent (spec-group-caption spec-grp))
-    
-    (al-each ((spec-group-entries spec-grp) caption entry)
+    (al-each (entry-list caption entry)
 
       (declare (ignore caption))
       
       (typecase entry
+	
+	;; run sub-group
 	(spec-group (multiple-value-bind (c f p) (run-group entry (+ depth 2))
 		      (incf count    c)
 		      (incf failures f)
 		      (incf pending  p)))
-	
+
+	;; run spec
 	(spec (handler-case
 		  (progn
 		    (format t "~a  ~a~%" indent (spec-name entry))
@@ -209,6 +213,59 @@
 			  (spec-pending-message pending-condition)))))))
 
     (values count failures pending)))
+
+(defun run-group (spec-grp &optional (depth 0))
+  (let ((indent (repeat-string depth "  ")))
+    
+    (format t "~a~a~%" indent (spec-group-caption spec-grp))
+
+    (multiple-value-bind (c f p) (run-group-entries (spec-group-entries spec-grp) depth)
+      (values c f p))))
+						    
+
+;;(defun run-group (spec-grp &optional (depth 0))
+;;  (let ((failures 0) (count 0) (pending 0) (indent (repeat-string depth "  ")))
+    
+;;    (format t "~a~a~%" indent (spec-group-caption spec-grp))
+
+;;    (al-each ((spec-group-entries spec-grp) caption entry)
+
+;;      (declare (ignore caption))
+      
+;;      (typecase entry
+;;	(spec-group (multiple-value-bind (c f p) (run-group entry (+ depth 2))
+;;		      (incf count    c)
+;;		      (incf failures f)
+;;		      (incf pending  p)))
+	
+;;	(spec (handler-case
+;;		  (progn
+;;		    (format t "~a  ~a~%" indent (spec-name entry))
+;;		    (incf count)
+
+;;		    (if (spec-is-empty entry)
+;;			(progn
+;;			  (format t "~a  : pending~%" indent)
+;;			  (incf pending))
+			
+;;			(progn
+;;			  (invoke-spec entry)
+;;		    
+;;			  (format t "~a  : passed~%" indent))))
+		
+;;		(spec-failed (failure)
+;;		  (incf failures)
+;;		  (format t "~a  : failed '~a'~%"
+;;			  indent
+;;			  (spec-failed-message failure)))
+
+;;		(spec-pending (pending-condition)
+;;		  (incf pending)
+;;		  (format t "~a  : pending '~a'~%"
+;;			  indent
+;;			  (spec-pending-message pending-condition)))))))
+
+;;    (values count failures pending)))
   
 (defun run-all ()
   (let ((count 0) (failures 0) (pending 0))
@@ -256,16 +313,6 @@
 	   (invoke-spec found)) 
 	  
 	  (list
-	   (al-each (found name entry)
-	     (declare (ignore name))
-	     (typecase entry
-	       (spec (invoke-spec entry))
-	       (spec-group (run-group found)))))
-	   ;;(format t "found range~%"))
+	   (run-group-entries found 0))
 	  
-	  (t (format t "didn't find a thing~%"))))))
-      
-
-      
-	  
-  )
+	  (t (format t "didn't find a thing~%")))))))

@@ -26,6 +26,12 @@
 	   (,val-var (cdr c)))
        ,@body)))
 
+(defmacro al-each-value ((db val-var) &body body)
+  (let ((key-var (gensym)))
+    `(al-each (,db ,key-var ,val-var)
+       (declare (ignore ,key-var))
+       ,@body)))
+			 
 
 (defun repeat-string (count str)
   (format nil "~V@{~a~:*~}" count str))
