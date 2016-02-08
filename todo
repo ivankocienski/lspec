@@ -5,10 +5,11 @@
   > just use (let) forms!
 * empty 'it' and 'context' blocks becoming pending
 * pending keyword in 'it' block stops test
-- configuration block (?)
+- configuration block (needed yet?)
 
-- run specific test
+* run specific test
 - better formatters
+- catch all errors on a run and report them in one final list
 
 ideas in no real order:
 

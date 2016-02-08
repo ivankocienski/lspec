@@ -31,6 +31,8 @@
 ;;(defparameter *id-for-spec* 0)
 ;;(defparameter *id-for-group* 0)
 
+(defparameter *formatter* nil)
+
 (defun run-expectation (exid var-name var args)
   (let ((expectation (find-expectation exid)))
     (if expectation
@@ -143,8 +145,12 @@
 	(spec (incf count))))
     count))
 
-(defun invoke-spec (spec)
-    
+(defun invoke-spec (formatter spec)
+
+  ;; NOTE: yeah, I know this is innefficient in the
+  ;;   way it re-gathers the callbacks and reverses them for each spec.
+  ;;   It could at least be moved into run-group
+  
   (labels ((recursive-spec-step (callbacks)
 	     (let ((callback (car callbacks)))
 	       (if callback
@@ -158,61 +164,45 @@
 		 
 		 (spec-group-around-callbacks group) )))
 
-    ;; NOTE: yeah, I know this is innefficient in the
-    ;;   way it re-gathers the callbacks and reverses them for each spec.
-    ;;   It could at least be moved into run-group
-    
-    (recursive-spec-step (reverse
-			  (gather-callbacks
-			   (spec-group spec))))))
+    (with-formatter-spec-run (formatter spec)
+      (handler-case
+
+	  ;; is spec marked as pending?
+	  (if (spec-is-empty spec)
+	      (set-spec-result +SPEC-RUN-PENDING+)
+
+	      ;; run spec
+	      (progn
+		(recursive-spec-step (reverse
+				      (gather-callbacks
+				       (spec-group spec))))
+		(set-spec-result +SPEC-RUN-PASS+)))
+	
+	(spec-failed (failure)
+	  (set-spec-result +SPEC-RUN-FAIL+
+			   (spec-failed-message failure)))
+
+	(spec-pending (pending-condition)
+	  (set-spec-result +SPEC-RUN-PENDING+
+			   (spec-pending-message pending-condition))) ))))
+
+
+
 
 (defun run-group (spec-grp &optional (depth 0))
   (declare (ignore spec-grp depth)))
 
-(defun run-group-entries (entry-list depth)
-    (let ((failures 0) (count 0) (pending 0) (indent (repeat-string depth "  ")))
+(defun run-group-entries (entry-list)
     
-    (al-each (entry-list caption entry)
+    (al-each-value (entry-list entry)
 
-      (declare (ignore caption))
-      
       (typecase entry
 	
 	;; run sub-group
-	(spec-group (multiple-value-bind (c f p) (run-group entry (+ depth 2))
-		      (incf count    c)
-		      (incf failures f)
-		      (incf pending  p)))
+	(spec-group (run-group entry))
 
 	;; run spec
-	(spec (handler-case
-		  (progn
-		    (format t "~a  ~a~%" indent (spec-name entry))
-		    (incf count)
-
-		    (if (spec-is-empty entry)
-			(progn
-			  (format t "~a  : pending~%" indent)
-			  (incf pending))
-			
-			(progn
-			  (invoke-spec entry)
-		    
-			  (format t "~a  : passed~%" indent))))
-		
-		(spec-failed (failure)
-		  (incf failures)
-		  (format t "~a  : failed '~a'~%"
-			  indent
-			  (spec-failed-message failure)))
-
-		(spec-pending (pending-condition)
-		  (incf pending)
-		  (format t "~a  : pending '~a'~%"
-			  indent
-			  (spec-pending-message pending-condition)))))))
-
-    (values count failures pending)))
+	(spec  (invoke-spec entry)))))
 
 (defun run-group (spec-grp &optional (depth 0))
   (let ((indent (repeat-string depth "  ")))
@@ -221,52 +211,7 @@
 
     (multiple-value-bind (c f p) (run-group-entries (spec-group-entries spec-grp) depth)
       (values c f p))))
-						    
 
-;;(defun run-group (spec-grp &optional (depth 0))
-;;  (let ((failures 0) (count 0) (pending 0) (indent (repeat-string depth "  ")))
-    
-;;    (format t "~a~a~%" indent (spec-group-caption spec-grp))
-
-;;    (al-each ((spec-group-entries spec-grp) caption entry)
-
-;;      (declare (ignore caption))
-      
-;;      (typecase entry
-;;	(spec-group (multiple-value-bind (c f p) (run-group entry (+ depth 2))
-;;		      (incf count    c)
-;;		      (incf failures f)
-;;		      (incf pending  p)))
-	
-;;	(spec (handler-case
-;;		  (progn
-;;		    (format t "~a  ~a~%" indent (spec-name entry))
-;;		    (incf count)
-
-;;		    (if (spec-is-empty entry)
-;;			(progn
-;;			  (format t "~a  : pending~%" indent)
-;;			  (incf pending))
-			
-;;			(progn
-;;			  (invoke-spec entry)
-;;		    
-;;			  (format t "~a  : passed~%" indent))))
-		
-;;		(spec-failed (failure)
-;;		  (incf failures)
-;;		  (format t "~a  : failed '~a'~%"
-;;			  indent
-;;			  (spec-failed-message failure)))
-
-;;		(spec-pending (pending-condition)
-;;		  (incf pending)
-;;		  (format t "~a  : pending '~a'~%"
-;;			  indent
-;;			  (spec-pending-message pending-condition)))))))
-
-;;    (values count failures pending)))
-  
 (defun run-all ()
   (let ((count 0) (failures 0) (pending 0))
 
@@ -313,6 +258,7 @@
 	   (invoke-spec found)) 
 	  
 	  (list
-	   (run-group-entries found 0))
+	   (multiple-value-bind (count fail pending) (run-group-entries found 0)
+	     (format t "done. count=~d, failed=~d, pending=~d~%" count fail pending)))
 	  
 	  (t (format t "didn't find a thing~%")))))))

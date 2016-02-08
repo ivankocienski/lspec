@@ -6,6 +6,9 @@
   :serial t
   :components ((:module "src"
 			:components ((:file "package")
+				     (:module "formatters"
+					      :components ((:file "base")
+							   (:file "tree")))
 				     (:file "expectations")
 				     (:file "lisp")
 				     (:file "main")))))
