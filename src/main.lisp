@@ -186,46 +186,28 @@
 	  (set-spec-result +SPEC-RUN-PENDING+
 			   (spec-pending-message pending-condition))) ))))
 
-
-
-
-(defun run-group (spec-grp &optional (depth 0))
-  (declare (ignore spec-grp depth)))
-
-(defun run-group-entries (entry-list)
+(defun run-group-entries (formatter entry-list)
     
     (al-each-value (entry-list entry)
 
       (typecase entry
 	
 	;; run sub-group
-	(spec-group (run-group entry))
+	(spec-group
+	 (with-formatter-group-run (formatter entry)
+	   (run-group-entries formatter
+			      (spec-group-entries entry))))
 
 	;; run spec
-	(spec  (invoke-spec entry)))))
-
-(defun run-group (spec-grp &optional (depth 0))
-  (let ((indent (repeat-string depth "  ")))
-    
-    (format t "~a~a~%" indent (spec-group-caption spec-grp))
-
-    (multiple-value-bind (c f p) (run-group-entries (spec-group-entries spec-grp) depth)
-      (values c f p))))
+	(spec (invoke-spec formatter entry)))))
 
 (defun run-all ()
-  (let ((count 0) (failures 0) (pending 0))
-
-    (al-each (*spec-group-root* caption entry)
-      (declare (ignore caption))
-      (multiple-value-bind (c f p) (run-group entry)
-	    (incf count    c)
-	    (incf failures f)
-	    (incf pending  p)))
-	
-    (format t "done. ~d specs, ~d failed, ~d pending~%" count failures pending)))
+  (with-formatter-run (*formatter*)
+    (run-group-entries *formatter* *spec-group-root*))
+  (formatter-report *formatter*))
 
 (defun run-select (filter-string)
-  (let ((path  (mapcar (lambda (s) (parse-integer s)) (split-by-char filter-string #\.))))
+  (let ((path (mapcar (lambda (s) (parse-integer s)) (split-by-char filter-string #\.))))
 
     (labels ((find-entry (entry-list id)
 	     (al-each (entry-list name entry)
@@ -252,13 +234,13 @@
 
       (let ((found (find-by-descent path
 				    *spec-group-root*)))
+	
+	(with-formatter-run (*formatter*)
+	  (typecase found
+	    (spec
+	     (invoke-spec *formatter* found)) 
+	  
+	    (list (run-group-entries *formatter* found)))))
 
-	(typecase found
-	  (spec
-	   (invoke-spec found)) 
-	  
-	  (list
-	   (multiple-value-bind (count fail pending) (run-group-entries found 0)
-	     (format t "done. count=~d, failed=~d, pending=~d~%" count fail pending)))
-	  
-	  (t (format t "didn't find a thing~%")))))))
+      (formatter-report *formatter*))))
+	

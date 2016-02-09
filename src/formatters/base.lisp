@@ -20,15 +20,12 @@
 
 
 (defgeneric formatter-start-run (this))
-
 (defgeneric formatter-end-run (this))
 
 (defgeneric formatter-start-group (this group))
-
-(defgeneric formatter-stop-group (this))
+(defgeneric formatter-end-group (this))
 
 (defgeneric formatter-start-spec (this spec))
-
 (defgeneric formatter-end-spec (this result message))
 
 (defgeneric formatter-report (this))
@@ -36,15 +33,12 @@
 ;; methods
 
 (defmethod formatter-start-run (this))
-
 (defmethod formatter-end-run (this))
 
 (defmethod formatter-start-group (this group))
-
-(defmethod formatter-stop-group (this))
+(defmethod formatter-end-group (this))
 
 (defmethod formatter-start-spec (this spec))
-
 (defmethod formatter-end-spec (this result message))
 
 (defmethod formatter-report (this))
@@ -69,3 +63,18 @@
 		,@body)
 	   
 	   (formatter-end-spec ,formatter ,result-var ,result-msg-var))))))
+
+(defmacro with-formatter-group-run ((formatter group) &body body)
+  `(unwind-protect
+	(progn
+	  (formatter-start-group ,formatter ,group)
+	  ,@body)
+     (formatter-end-group ,formatter)))
+
+(defmacro with-formatter-run ((formatter) &body body)
+  `(unwind-protect
+	(progn
+	  (formatter-start-run ,formatter)
+	  ,@body)
+     (formatter-end-run ,formatter)))
+  
