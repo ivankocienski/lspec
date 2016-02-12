@@ -2,49 +2,7 @@
 
 ;; what was i doing again?
 
-(defstruct spec-group
-  id
-  caption
-  around-callbacks
-  ;; this should count all the sub entries?
-  entries
-  parent)
-
-(defstruct spec
-  id
-  name
-  code
-  group
-  is-empty)
-
-(define-condition spec-failed (error)
-  ((message :initarg :message
-	    :initform nil
-	    :accessor spec-failed-message)))
-
-(define-condition spec-pending (error)
-  ((message :initarg :message
-	    :initform nil
-	    :accessor spec-pending-message)))
-
-(defparameter *spec-group-root* nil)
-;;(defparameter *id-for-spec* 0)
-;;(defparameter *id-for-group* 0)
-
-(defparameter *formatter* nil)
-
-(defun run-expectation (exid var-name var args)
-  (let ((expectation (find-expectation exid)))
-    (if expectation
-	(if (not (funcall (expectation-test-code expectation) var args))
-	    (error 'spec-failed
-		   :message (format nil "(~a=~s) ~a"
-				    var-name
-				    var
-				    (expectation-message expectation)))))))
-
-(defmacro expect (var expectation &rest args)
-  `(run-expectation ,expectation ',var ,var ,args))
+(defparameter *formatter-name* :tree)
 
 (defun clear-specs ()
   (let ((count (length *spec-group-root*)))
@@ -76,61 +34,6 @@
 			     name))))))
 
     (iterate-entry-list "ROOT" 0 nil *spec-group-root*)))
-
-(defun build-it (name group code empty)
-  (setf (spec-group-entries group)
-	(al-insert (spec-group-entries group) name
-		   (make-spec :name name
-			      :code code
-			      :is-empty empty
-			      :group group
-			      :id (1+ (length (spec-group-entries group)))))))
-
-(defun alloc-new-group (caption parent)
-  (format t "alloc-new-group~%")
-  (let ((new-group (make-spec-group :caption caption
-				    :parent parent
-				    :id (1+ (length
-					     (if parent
-						 (spec-group-entries parent)
-						 *spec-group-root*))))))
-
-    (if parent
-	(setf (spec-group-entries parent)
-	      (al-insert (spec-group-entries parent) caption new-group))
-	
-	(setf *spec-group-root*
-	      (al-insert *spec-group-root* caption new-group)))
-	
-    new-group))
-
-(defmacro build-around-each (group &body body)
-  `(push (lambda (next-step)
-	   (macrolet ((yield () `(funcall next-step)))
-	     ,@body))
-	 (spec-group-around-callbacks ,group)))
-
-(defmacro internal-it (caption group &body body)
-  `(macrolet ((pending (&optional (message "This spec is pending"))
-		`(error 'spec-pending
-			:message ,message)))
-     
-     (build-it ,caption ,group (lambda () ,@body) ,(null body))))
-
-(defmacro internal-group (caption parent &body body)
-    
-    `(let ((new-group (alloc-new-group ,caption ,parent)))
-       
-       (macrolet ((it (caption &body body)
-		    `(internal-it ,caption new-group ,@body))
-		  
-		  (context (caption &body body)
-		    `(internal-group ,caption new-group ,@body))
-		  
-		  (around-each (&body body)
-		    `(build-around-each new-group ,@body)))
-
-		    ,@body)))
 
 (defmacro specify (caption &body body)
   `(internal-group ,caption nil ,@body))
@@ -186,25 +89,13 @@
 	  (set-spec-result +SPEC-RUN-PENDING+
 			   (spec-pending-message pending-condition))) ))))
 
-(defun run-group-entries (formatter entry-list)
-    
-    (al-each-value (entry-list entry)
 
-      (typecase entry
-	
-	;; run sub-group
-	(spec-group
-	 (with-formatter-group-run (formatter entry)
-	   (run-group-entries formatter
-			      (spec-group-entries entry))))
-
-	;; run spec
-	(spec (invoke-spec formatter entry)))))
 
 (defun run-all ()
-  (with-formatter-run (*formatter*)
-    (run-group-entries *formatter* *spec-group-root*))
-  (formatter-report *formatter*))
+  (with-named-formatter (formatter *formatter-name*)
+    (with-formatter-run (formatter)
+      (run-group-entries formatter *spec-group-root*))
+    (formatter-report formatter)))
 
 (defun run-select (filter-string)
   (let ((path (mapcar (lambda (s) (parse-integer s)) (split-by-char filter-string #\.))))
@@ -234,13 +125,12 @@
 
       (let ((found (find-by-descent path
 				    *spec-group-root*)))
-	
-	(with-formatter-run (*formatter*)
-	  (typecase found
-	    (spec
-	     (invoke-spec *formatter* found)) 
-	  
-	    (list (run-group-entries *formatter* found)))))
 
-      (formatter-report *formatter*))))
+	(with-named-formatter (formatter *formatter-name*)
+	  (with-formatter-run (formatter)
+	    (typecase found
+	      (spec (invoke-spec formatter found)) 
+	      (list (run-group-entries formatter found)))))
+
+	(formatter-report *formatter*)))))
 	

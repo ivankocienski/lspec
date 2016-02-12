@@ -49,3 +49,9 @@
 	       (cons sub-string
 		     (split-by-char (subseq string (1+ len)) char))
 	       (list sub-string))))
+
+
+(defun get-real-time ()
+  (/ (float (get-internal-real-time))
+     internal-time-units-per-second))
+	    

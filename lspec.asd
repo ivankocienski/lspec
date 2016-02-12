@@ -10,5 +10,7 @@
 					      :components ((:file "base")
 							   (:file "tree")))
 				     (:file "expectations")
+				     (:file "spec-group")
+				     (:file "spec")
 				     (:file "lisp")
 				     (:file "main")))))
