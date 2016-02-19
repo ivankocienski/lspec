@@ -1,4 +1,4 @@
-w(in-package :lspec)
+(in-package :lspec)
 
 (defparameter *spec-group-root* nil)
 
