@@ -20,11 +20,12 @@
    (end-time :accessor output-formatter-end-time
 	       :initform nil)
 
-   (spec-count :initform 0)
-   
-   (spec-fail-count :initform 0)
-   
-   (spec-pending-count :initform 0)))
+   (spec-count         :initform 0)
+   ;;(spec-fail-count    :initform 0)
+   ;;(spec-pending-count :initform 0)
+
+   (pending-specs :initform nil)
+   (failed-specs  :initform nil)))
 
 ;;
 ;; generics
@@ -37,7 +38,7 @@
 (defgeneric formatter-end-group (this))
 
 (defgeneric formatter-start-spec (this spec))
-(defgeneric formatter-end-spec (this result message))
+(defgeneric formatter-end-spec (this spec result message))
 
 (defgeneric formatter-report (this))
 
@@ -47,17 +48,17 @@
 
 (defmethod formatter-start-run (this)
   (with-slots (start-time
+	       end-time
 	       spec-count
-	       spec-fail-count
-	       spec-pending-count
-	       end-time) this
+	       pending-specs
+	       failed-specs) this
 
     (let ((now (get-real-time)))
       (setf start-time         now
+	    end-time           now
 	    spec-count         0
-	    spec-fail-count    0
-	    spec-pending-count 0
-	    end-time           now))))
+	    pending-specs      nil
+	    failed-specs       nil))))
 
 (defmethod formatter-end-run (this)
   (with-slots (end-time) this
@@ -71,31 +72,75 @@
     (incf spec-count))
   )
 
-(defmethod formatter-end-spec (this result message)
-  (with-slots (spec-fail-count
-	       spec-pending-count) this
+(defmethod formatter-end-spec (this spec result message)
+  (with-slots (pending-specs
+	       failed-specs) this
 
     (if (eq result +SPEC-RUN-FAIL+)
-	(incf spec-fail-count))
+	(setf failed-specs (cons (cons spec
+				       message)
+				 failed-specs)))
 
     (if (eq result +SPEC-RUN-PENDING+)
-	(incf spec-pending-count)))
-  )
+	(setf pending-specs (cons (cons spec
+					message)
+				  pending-specs)))))
 
 (defmethod formatter-report (this)
   (with-slots (start-time
 	       end-time
 	       spec-count
-	       spec-fail-count
-	       spec-pending-count) this
-    
-    (format t "~%done. ~fs~%"
-	    (- end-time start-time))
-    
+	       pending-specs
+	       failed-specs) this
+
+    (format t "~%---------------------------------------------~%~%")
+
+    ;; TODO: print pending specs
+    (if pending-specs
+	(progn
+	  (format t "~%pending:~%")
+	  (dolist (ps pending-specs)
+	    (let ((spec    (car ps))
+		  (message (cdr ps)))
+	      (format t "  (~a) ~a~%"
+		      (full-spec-id spec)
+		      (full-spec-description spec))
+	      
+	      (format t "    ~s~%"
+		      (if (empty? message)
+			  "[is pending]"
+			  message))	      
+	      (format t "    ~s~%" message)
+	      ))))
+
+    ;; TODO: print failed specs
+    (if failed-specs
+	(progn
+	  (format t "~%failed:~%")
+	  (dolist (fs pending-specs)
+	    (let ((spec    (car fs))
+		  (message (cdr fs)))
+	      
+	      (format t "  (~a) ~a~%"
+		      (full-spec-id spec)
+		      (full-spec-description spec))
+	      
+	      (format t "    ~s~%"
+		      (if (empty? message)
+			  "[NO FAILURE MESSAGE!]"
+			  message))
+	      ))))
+	  
+
+    ;; summary
     (format t "results: ~d specs, ~d failures, ~d pending~%"
 	    spec-count
-	    spec-fail-count
-	    spec-pending-count)))
+	    (length failed-specs)
+	    (length pending-specs))
+
+    (format t "~%done. ~fs~%"
+	    (- end-time start-time))))
+
 	    
 
 ;;
@@ -116,7 +161,7 @@
 		(formatter-start-spec ,formatter ,spec)
 		,@body)
 	   
-	   (formatter-end-spec ,formatter ,result-var ,result-msg-var))))))
+	   (formatter-end-spec ,formatter ,spec ,result-var ,result-msg-var))))))
 
 (defmacro with-formatter-group-run ((formatter group) &body body)
   `(unwind-protect

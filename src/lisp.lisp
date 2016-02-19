@@ -36,6 +36,19 @@
 (defun repeat-string (count str)
   (format nil "~V@{~a~:*~}" count str))
 
+(defun joins (input-list &optional join-string)
+  (with-output-to-string (stream)
+    (labels ((print-bits (bits)
+	       (let ((bit (car bits)) (rest (cdr bits)))
+		 (format stream bit)
+		 (if rest
+		     (progn
+		       (if join-string
+			   (format stream join-string))
+		       (print-bits rest))))))
+      
+      (print-bits input-list))))
+
 
 (defun chomp-by-char (string char)
   (let ((found-at (position char string)))

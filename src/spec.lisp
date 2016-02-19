@@ -49,3 +49,25 @@
 			:message ,message)))
      
      (build-it ,caption ,group (lambda () ,@body) ,(null body))))
+
+(defun full-spec-description (spec)
+
+  (labels ((gather-group-names (group)
+	     (cons (spec-group-caption group)
+		   (let ((parent (spec-group-parent group)))
+		     (if parent (gather-group-names parent))))))
+    
+    (format nil "~{~A: ~}" (reverse
+			    (cons (spec-name spec)
+				  (gather-group-names (spec-group spec)))))))
+
+(defun full-spec-id (spec)
+  (labels ((gather-group-ids (group)
+	     (cons (spec-group-id group)
+		   (let ((parent (spec-group-parent group)))
+		     (if parent (gather-group-names parent))))))
+    
+    (format nil "~{~A.~}" (reverse
+			    (cons (spec-id spec)
+				  (gather-group-names (spec-group spec)))))))
+  

@@ -1,4 +1,4 @@
-(in-package :lspec)
+w(in-package :lspec)
 
 (defparameter *spec-group-root* nil)
 
@@ -9,6 +9,14 @@
   ;; this should count all the sub entries?
   entries
   parent)
+
+(defmethod print-object ((this spec-group) out)
+  (print-unreadable-object (this out)
+    (format out "SPEC-GROUP ")
+    (format out "id=~d " (spec-group-id this))
+    (format out "caption=~s " (spec-group-caption this))
+    (format out "around-callbacks=") (print-object (spec-group-around-callbacks this) out)
+    (format out " entries=") (print-object (spec-group-entries this) out)))
 
 (defun alloc-new-group (caption parent)
   (format t "alloc-new-group~%")

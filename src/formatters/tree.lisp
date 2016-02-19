@@ -40,7 +40,7 @@
   (with-slots (indent-string) this
     (format t "~a>  ~a~%" indent-string (spec-name spec))))
 
-(defmethod formatter-end-spec ((this tree-formatter) result message)
+(defmethod formatter-end-spec ((this tree-formatter) spec result message)
   (call-next-method)
   (with-slots (indent-string) this
     (format t "~a>    : ~a ~a~%"
