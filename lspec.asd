@@ -14,3 +14,12 @@
 				     (:file "spec")
 				     (:file "lisp")
 				     (:file "main")))))
+
+(asdf:defsystem #:lspec-example
+  :description "Example code for lspec"
+  :author "Me"
+  :license "MIT"
+  :serial t
+  :depends-on (:lspec)
+  :components ((:module "examples"
+			:components ((:file "00-basic-examples")))))

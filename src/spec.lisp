@@ -44,7 +44,7 @@
 
 
 (defmacro internal-it (caption group &body body)
-  `(macrolet ((pending (&optional (message "This spec is pending"))
+  `(package-macrolet ((pending (&optional (message "This spec is pending"))
 		`(error 'spec-pending
 			:message ,message)))
      
@@ -57,17 +57,20 @@
 		   (let ((parent (spec-group-parent group)))
 		     (if parent (gather-group-names parent))))))
     
-    (format nil "~{~A: ~}" (reverse
-			    (cons (spec-name spec)
-				  (gather-group-names (spec-group spec)))))))
+    (joins (reverse
+	    (cons (spec-name spec)
+		  (gather-group-names (spec-group spec))))
+	   ": ")))
 
 (defun full-spec-id (spec)
   (labels ((gather-group-ids (group)
 	     (cons (spec-group-id group)
 		   (let ((parent (spec-group-parent group)))
-		     (if parent (gather-group-names parent))))))
+		     (if parent (gather-group-ids parent))))))
     
-    (format nil "~{~A.~}" (reverse
-			    (cons (spec-id spec)
-				  (gather-group-names (spec-group spec)))))))
+    (joins (mapcar (lambda (id) (format nil "~d" id))
+		   (reverse
+		    (cons (spec-id spec)
+			  (gather-group-ids (spec-group spec)))))
+	   ".")))
   

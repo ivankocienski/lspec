@@ -1,14 +1,11 @@
-(in-package :lspec)
+(in-package :cl-user)
+
+(defpackage :lspec-example
+  (:use :cl :lspec))
+
+(in-package :lspec-example)
 
 (specify "A group of tests"
-
-  ;;(before
-   ;; do some set up here ...
-  ;; )
-
-  ;;(after-each
-   ;; do some cleanup
-   ;;)
 
   (around-each
    ;; do some set up

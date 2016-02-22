@@ -95,7 +95,7 @@
 
     (format t "~%---------------------------------------------~%~%")
 
-    ;; TODO: print pending specs
+    ;; print pending specs
     (if pending-specs
 	(progn
 	  (format t "~%pending:~%")
@@ -110,14 +110,13 @@
 		      (if (empty? message)
 			  "[is pending]"
 			  message))	      
-	      (format t "    ~s~%" message)
 	      ))))
 
-    ;; TODO: print failed specs
+    ;; print failed specs
     (if failed-specs
 	(progn
 	  (format t "~%failed:~%")
-	  (dolist (fs pending-specs)
+	  (dolist (fs failed-specs)
 	    (let ((spec    (car fs))
 		  (message (cdr fs)))
 	      
@@ -133,7 +132,7 @@
 	  
 
     ;; summary
-    (format t "results: ~d specs, ~d failures, ~d pending~%"
+    (format t "~%results: ~d specs, ~d failures, ~d pending~%"
 	    spec-count
 	    (length failed-specs)
 	    (length pending-specs))

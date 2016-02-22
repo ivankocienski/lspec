@@ -8,8 +8,15 @@
 - configuration block (needed yet?)
 
 * run specific test
-- better formatters
-- catch all errors on a run and report them in one final list
+* better formatters
+* catch all errors on a run and report them in one final list
+
+- dot formatter
+- switching formatters
+- listing formatters
+
+- exportarise
+- documentation / examples
 
 ideas in no real order:
 

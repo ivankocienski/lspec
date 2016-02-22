@@ -38,7 +38,7 @@
 
 (defmacro build-around-each (group &body body)
   `(push (lambda (next-step)
-	   (macrolet ((yield () `(funcall next-step)))
+	   (package-macrolet ((yield () `(funcall next-step)))
 	     ,@body))
 	 (spec-group-around-callbacks ,group)))
 
@@ -46,7 +46,7 @@
     
     `(let ((new-group (alloc-new-group ,caption ,parent)))
        
-       (macrolet ((it (caption &body body)
+       (package-macrolet ((it (caption &body body)
 		    `(internal-it ,caption new-group ,@body))
 		  
 		  (context (caption &body body)
