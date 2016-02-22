@@ -49,7 +49,9 @@ This will also run an entire 'spec group' like so
 
     (run-select "3.1")
 
-## Documentation
+
+
+## API Documentation
 
     (clear-specs)
 
@@ -73,19 +75,52 @@ Run selected specs based on filter string.
 
     (specify ...)
 
-Macro that wraps a spec-block. See examples/ for a typical usage.
+Macro that wraps a spec-block. Inside the block a few forms are defined in
+the context of the sexp; around-each, context and it.
 
-    (expect)
+*around-each* is a way of executing code around each spec. Around functions
+are chained (parent functions are all gathered up and run in sequence before
+a spec). You MUST use a yield in each around-each or the spec chain won't
+continue. This may be a feature.
 
-Macro that defines an expecation.
+*context* is a way of grouping specs. Can be useful if you want to have
+lots of specs for one thing (e.g. one function call or http path). Contexts
+can be empty. Requires a description.
 
-    (list-expectation)
+*it* is the way an individual spec is defined. If no body is provided it will
+be 'pending'. This allows you to sketch out a skeleton of pending specs and
+then code them one by one. Inside an it form you can use a pending decleration
+to skip this spec. Useful if you want to keep the spec code to fix later but
+need to deal with a lower level spec first. It blocks then use expect forms
+to actually define tests.
 
-List all known expectations that lspec can match against
+See examples/ for a typical usage.
 
-    (defexpectation)
+    (expect VAR TEST ...)
 
-Define custom expectations.
+Macro that defines an expecation. VAR is the variable to test and TEST is
+the particular test to run. Optional arguments may be provided depending on
+the test. If something fails a spec a message declaring the ID of the spec,
+the variable, value of variable and test will be printed. Useful, no?
+
+    (list-expectations)
+
+List all known expectations that lspec can match against with a short
+description.
+
+    (defexpectation TEST DESCRIPTION BODY)
+
+Define custom expectations. At some point your app will have some fiddly
+custom doodad that needs verifying (e.g. CSS) and you can define your own
+expectations (or redefine existing expecations if you are evil).
+
+TEST identifies the test for use in expect. DESCRIPTION is a short string
+that gets printed when list-expectations or an expect block fails its test.
+
+BODY is the body of the test. Return value of T indicates pass. Anything
+else is a failure. 'val' is the value of the variable under test.
+
+See src/expectations.lisp for some samples
 
     (current-formatter)
 

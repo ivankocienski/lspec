@@ -17,8 +17,10 @@
 * switching formatters
 * listing formatters
 
-- documentation
+* documentation
 
+- fix expectation decleration
+  - better way of specifying the value/extra arguments
 - more examples
 - more expectations
 
