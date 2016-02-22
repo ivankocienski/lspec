@@ -7,7 +7,7 @@ A 'sort of' clone of Ruby rspec in Common Lisp.
 Unfortunately lspec is not a part of quicklisp at this time and must be
 installed by cloning the repo into your local-projects directory manually.
 
-  git clone https://github.com/ivankocienski/lspec.git ~/quicklisp/local-projects/lspec
+    git clone https://github.com/ivankocienski/lspec.git ~/quicklisp/local-projects/lspec
 
 You may need to run (ql:register-local-projects) to refresh databse.
 
@@ -15,7 +15,7 @@ You may need to run (ql:register-local-projects) to refresh databse.
 
 Write some specs (see examples directory) then run
 
-  (run-all)
+    (run-all)
 
 to run all your specs. You will notice that failures and pending specs are
 reported at the end of each run like so
@@ -43,58 +43,58 @@ done. 0.0009765625s
 
 To run an individual spec again use its ID like so
 
-  (run-select "3.1.2")
+    (run-select "3.1.2")
 
 This will also run an entire 'spec group' like so
 
-  (run-select "3.1")
+    (run-select "3.1")
 
 ## Documentation
 
-  (clear-specs)
+    (clear-specs)
 
 Reset all registered specs.
 
-  (list-specs)
+    (list-specs)
 
 List specs (in a tree like format with IDs).
 
-  (count-specs)
+    (count-specs)
 
 Count registered specs.
 
-  (run-all)
+    (run-all)
 
 Run all registered specs.
 
-  (run-select filter)
+    (run-select filter)
 
 Run selected specs based on filter string.
 
-  (specify ...)
+    (specify ...)
 
 Macro that wraps a spec-block. See examples/ for a typical usage.
 
-  (expect)
+    (expect)
 
 Macro that defines an expecation.
 
-  (list-expectation)
+    (list-expectation)
 
 List all known expectations that lspec can match against
 
-  (defexpectation)
+    (defexpectation)
 
 Define custom expectations.
 
-  (current-formatter)
+    (current-formatter)
 
 Show current formatter.
 
-  (set-formatter)
+    (set-formatter)
 
 Set formatter.
 
-  (list-formatters)
+    (list-formatters)
 
 List formatters that lspec has available.
