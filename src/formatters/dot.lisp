@@ -20,7 +20,7 @@
 
 (defmethod formatter-end-spec ((this dot-formatter) spec result message)
   (call-next-method)
-  (print (cond ((eq result +SPEC-RUN-FAIL+) "F")
+  (princ (cond ((eq result +SPEC-RUN-FAIL+) "F")
 	       ((eq result +SPEC-RUN-PENDING+) "P")
 	       ((eq result +SPEC-RUN-PASS+) ".")
 	       (t "?")))
