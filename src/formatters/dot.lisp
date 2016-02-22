@@ -28,3 +28,7 @@
 
 (defmethod formatter-report ((this dot-formatter))
   (call-next-method))
+
+(register-formatter :dot
+		    'dot-formatter
+		    "Outputs its progress as a string of '.'s")

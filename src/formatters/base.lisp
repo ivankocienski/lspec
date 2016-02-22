@@ -169,11 +169,6 @@
 	  ,@body)
      (formatter-end-group ,formatter)))
 
-(defun make-formatter (name)
-  (cond
-    ((eq name :tree) (make-instance 'tree-formatter))
-    ((eq name :dot) (make-instance 'dot-formatter))
-    (t (error (format nil "Could not find '~s' as formatter" name)))))
 
 (defmacro with-formatter-run ((formatter-var) &body body)
   `(unwind-protect
@@ -183,5 +178,28 @@
      (formatter-end-run ,formatter-var)))
   
 (defmacro with-named-formatter ((formatter-var formatter-name) &body body)
-  `(let ((,formatter-var (make-formatter ,formatter-name)))
+  `(let ((,formatter-var (make-formatter-instance ,formatter-name)))
      ,@body))
+
+;;
+;; formatter DB stuff
+;;
+
+(defparameter *formatter-db* nil)
+
+(defun list-formatters ()
+  (al-each (*formatter-db* formatter-symbol fmt)
+    (let ((description (cdr fmt)))
+      (format t "~a: ~a~%" formatter-symbol description))))
+
+(defun make-formatter-instance (name)
+  (al-each (*formatter-db* formatter-symbol fmt)
+    (if (eq formatter-symbol name)
+	(return-from make-formatter-instance
+	  (make-instance (car fmt)))))
+
+  (error (format nil "Could not find '~s' as formatter (try list-formatters)" name)))
+
+(defun register-formatter (id type description)
+  (setf *formatter-db*
+	(al-insert *formatter-db* id (cons type description))))

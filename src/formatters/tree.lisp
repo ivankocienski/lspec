@@ -56,3 +56,7 @@
 
 (defmethod formatter-report ((this tree-formatter))
   (call-next-method))
+
+(register-formatter :tree
+		    'tree-formatter
+		    "Prints test structure as a tree as tests are run")

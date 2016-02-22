@@ -4,6 +4,13 @@
 
 (defparameter *formatter-name* :dot)
 
+(defun current-formatter ()
+  (format t "current-formatter=~a~%" *formatter-name*)
+  )
+
+(defun set-formatter (fmt)
+  (setf *formatter-name* fmt))
+
 (defun clear-specs ()
   (let ((count (length *spec-group-root*)))
     (setf *spec-group-root* nil)

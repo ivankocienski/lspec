@@ -13,6 +13,9 @@
 	   :list-expectations
 	   :defexpactation
 
+	   :current-formatter
+	   :set-formatter
+	   :list-formatters
 
 	   ;; these are also defined in the context of specify macro
 	   ;;:it
