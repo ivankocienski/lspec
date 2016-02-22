@@ -8,6 +8,7 @@
 			:components ((:file "package")
 				     (:module "formatters"
 					      :components ((:file "base")
+							   (:file "dot")
 							   (:file "tree")))
 				     (:file "expectations")
 				     (:file "spec-group")

@@ -2,7 +2,7 @@
 
 ;; what was i doing again?
 
-(defparameter *formatter-name* :tree)
+(defparameter *formatter-name* :dot)
 
 (defun clear-specs ()
   (let ((count (length *spec-group-root*)))

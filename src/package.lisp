@@ -18,6 +18,7 @@
 	   ;;:it
 	   ;;:context
 	   ;;:around-each
+	   ;;:pending
 	   ;;:yield
 	   ))
 

@@ -172,6 +172,7 @@
 (defun make-formatter (name)
   (cond
     ((eq name :tree) (make-instance 'tree-formatter))
+    ((eq name :dot) (make-instance 'dot-formatter))
     (t (error (format nil "Could not find '~s' as formatter" name)))))
 
 (defmacro with-formatter-run ((formatter-var) &body body)

@@ -10,13 +10,17 @@
 * run specific test
 * better formatters
 * catch all errors on a run and report them in one final list
+* exportarise
+* examples
 
 - dot formatter
 - switching formatters
 - listing formatters
 
-- exportarise
-- documentation / examples
+- documentation
+
+- more examples
+- more expectations
 
 ideas in no real order:
 
