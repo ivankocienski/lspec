@@ -19,8 +19,8 @@
 
 * documentation
 
-- fix expectation decleration
-  - better way of specifying the value/extra arguments
+* fix expectation decleration
+  * better way of specifying the value/extra arguments
 - more examples
 - more expectations
 

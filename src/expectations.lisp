@@ -11,10 +11,10 @@
 	(make-expectation :message   msg
 			  :test-code code)))
 
-(defmacro defexpectation (id msg &body body)
+(defmacro defexpectation ((id msg var args) &body body)
   `(build-expectation ,id ,msg
-		      (lambda (val &rest args)
-			(declare (ignorable args))
+		      (lambda (,var &rest ,args)
+			(declare (ignorable ,args))
 			,@body)))
 
 (defun list-expectations ()
@@ -33,11 +33,11 @@
 (defun find-expectation (id)
   (gethash id *expectation-table*))
 
-(defexpectation :to-be-zero "should be zero"
+(defexpectation (:to-be-zero "should be zero" val args)
   (zerop val))
 
-(defexpectation :to-be-true "should be true"
+(defexpectation (:to-be-true "should be true" val args)
   (and (eq (type-of val) 'boolean) val))
 
-(defexpectation :to-be-nil "should be nil"
+(defexpectation (:to-be-nil "should be nil" val args)
   (null val))

@@ -6,6 +6,7 @@
   :serial t
   :components ((:module "src"
 			:components ((:file "package")
+				     (:file "lisp")
 				     (:module "formatters"
 					      :components ((:file "base")
 							   (:file "dot")
@@ -13,7 +14,6 @@
 				     (:file "expectations")
 				     (:file "spec-group")
 				     (:file "spec")
-				     (:file "lisp")
 				     (:file "main")))))
 
 (asdf:defsystem #:lspec-example

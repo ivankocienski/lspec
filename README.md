@@ -108,7 +108,7 @@ the variable, value of variable and test will be printed. Useful, no?
 List all known expectations that lspec can match against with a short
 description.
 
-    (defexpectation TEST DESCRIPTION BODY)
+    (defexpectation (TEST DESCRIPTION VAL ARGS) BODY)
 
 Define custom expectations. At some point your app will have some fiddly
 custom doodad that needs verifying (e.g. CSS) and you can define your own
@@ -116,6 +116,11 @@ expectations (or redefine existing expecations if you are evil).
 
 TEST identifies the test for use in expect. DESCRIPTION is a short string
 that gets printed when list-expectations or an expect block fails its test.
+
+VAL is an identifier you can choose that will hold the value under test.
+
+ARGS is the rest of the values sent to the expectation in the spec during
+execution time.
 
 BODY is the body of the test. Return value of T indicates pass. Anything
 else is a failure. 'val' is the value of the variable under test.
